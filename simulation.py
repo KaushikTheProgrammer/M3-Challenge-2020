@@ -54,11 +54,15 @@ eMaintenance = 10000 # $/year
 eLifeSpan = 20
 dLifeSpan = 15
 
-truckBudget = 32200000000
+truckBudget = (3790000 * 120000) + (140 + 160000) # Number of trucks bought times price for diesel and electric
 
 # Initializing arrays to track truck population through years with year 0 values
 dTrucksByYear = [totalTrucks]
 eTrucksByYear = [0]
+
+# Model increasing truck budget each year
+def truckBudgetAdjuster(total_eTrucks, truckBudget, eTruckMaintenence, dTruckMaintenence):
+    return truckBudget + (total_eTrucks * (dTruckMaintenence - eTruckMaintenence))
 
 # Model decrease of electric truck prices
 def eTruckPrice(time):
@@ -100,7 +104,6 @@ for year in range(1, 21):
     dTruckPriceCurr = dTruckPriceAnnual(year)
     print(year)
 
-
     electricIsCheaper = False
     
     if(eTruckPriceCurr < dTruckPriceCurr):
@@ -127,13 +130,12 @@ for year in range(1, 21):
 
     eTrucks = updateTruckPopulation(eTrucksPurchased, eTrucks)
     dTrucks = updateTruckPopulation(dTrucksPurchased, dTrucks)
-
+    truckBudget = truckBudgetAdjuster(sum(eTrucks.values()), truckBudget, eCost + eMaintenance, dCost + dMaintenance)
+    print(truckBudget)
     
     eTrucksByYear.append(sum(eTrucks.values()))
     dTrucksByYear.append(sum(dTrucks.values()))
     print(dTrucks)
-
-
     print('\n')
 
 print(eTrucksByYear)

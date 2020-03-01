@@ -66,11 +66,11 @@ def truckBudgetAdjuster(total_eTrucks, truckBudget, eTruckMaintenence, dTruckMai
 
 # Model decrease of electric truck prices
 def eTruckPrice(time):
-    return 160000 - (5000 * (time - 1))    
+    return     
 
 # Model decrease of diesel truck prices
 def dTruckPrice(time):
-    return 120000 - (2000 * (time - 1))
+    return 103.4393 - (-18.31066 / 1.100271) * (1 - math.exp())
 
 def eTruckPriceAnnual(time):
         return (eTruckPrice(time) / eLifeSpan) + eCost + eMaintenance
@@ -82,7 +82,7 @@ def demandNewTrucks(time):
     return 20000
 
 def eTruckSupply(time):
-    return int(10000 * (math.exp(time - 3) + 1))
+    return 400000 + ((2627.477 - 400000) / (1 + math.pow((time / 1.261193), 5.087)))
 
 def updateTruckPopulation(numBought, trucks):
     trucksNew = {}

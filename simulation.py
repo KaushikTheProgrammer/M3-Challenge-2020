@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 eTruckOrders = 140
 
 # Age: Population Count
-eTrucks =	{
+eTrucks = {
     0: eTruckOrders,
     1: 0,
     2: 0,
@@ -28,7 +28,7 @@ eTrucks =	{
     20: 0
 }
 totalTrucks = 3680000
-dTrucks =	{
+dTrucks = {
     0: totalTrucks / 16,
     1: totalTrucks / 16,
     2: totalTrucks / 16,
@@ -62,8 +62,6 @@ eTrucksByYear = [eTruckOrders]
 
 # Model increasing truck budget each year
 def truckBudgetAdjuster(total_eTrucks, truckBudget, eTruckMaintenence, dTruckMaintenence):
-    print("maintenence delta: ", dTruckMaintenence - eTruckMaintenence)
-    print("added electric budget: ", total_eTrucks * (dTruckMaintenence - eTruckMaintenence))
     return truckBudget + (total_eTrucks * (dTruckMaintenence - eTruckMaintenence))
 
 # Model decrease of electric truck prices
@@ -81,7 +79,7 @@ def dTruckPriceAnnual(time):
     return (dTruckPrice(time) / dLifeSpan) + dCost + dMaintenance
 
 def demandNewTrucks(time):
-    return int(((6.1789 - (2.425216 * math.exp(-0.01918301 * time))) - 3.753684) * 100000)
+    return ((6.1789 - (2.425216 * math.exp(-0.01918301 * time))) - 3.753684) * 100000
 
 def eTruckSupply(time):
     return int(300000 + ((2627.477 - 300000) / (1 + math.pow((time / 1.261193), 5.087))))
@@ -107,60 +105,115 @@ yearTracker = [0]
 eTruckPriceTracker = [eTruckPrice(0)]
 dTruckPriceTracker = [dTruckPrice(0)]
 newDemandTracker = [demandNewTrucks(0)]
-budgetTracker = [truckBudget]
+DemandTracker = [demandNewTrucks(0)]
+budgetTracker = [0]
 eTruckSupplyTracker = [eTruckSupply(0)]
 maintenenceDelta = (dCost + dMaintenance) - (eCost + eMaintenance)
-addedElectricBudgetTracker = [sum(eTrucks.values()) * maintenenceDelta]
+addedElectricBudgetTracker = [0]
+eTrucksPurchasedTracker = [0]
+dTrucksPurchasedTracker = [0]
 
 for year in range(1, 21):
+    print(year)
+    print(eTrucks)
+    print(dTrucks)
+    print("\n")
+    yearTracker.append(year)
+
     eTruckPriceCurr = eTruckPriceAnnual(year)
     dTruckPriceCurr = dTruckPriceAnnual(year)
-    yearTracker.append(year)
+
+    eTruckPriceTracker.append(eTruckPrice(year))
+    dTruckPriceTracker.append(dTruckPrice(year))
+    DemandTracker.append(int(demandNewTrucks(year) + dTrucks[dLifeSpan] + eTrucks[eLifeSpan]))
+    newDemandTracker.append(int(demandNewTrucks(year)))
+    budgetTracker.append(truckBudget)
+    addedElectricBudgetTracker.append(sum(eTrucks.values()) * maintenenceDelta)
+    eTruckSupplyTracker.append(int(eTruckSupply(year)))
     
-    print(year)
-    print("eTruckPrice(year): ", eTruckPrice(year))
-    print("dTruckPrice(year): ", dTruckPrice(year))
+    if eTruckPriceCurr > dTruckPriceCurr:
+        eTrucksPurchased = 0
+        dTrucksPurchased = demandNewTrucks(year) + dTrucks[dLifeSpan] + eTrucks[eLifeSpan]
 
-    electricIsCheaper = False
-    
-    if(eTruckPriceCurr < dTruckPriceCurr):
-        electricIsCheaper = True
-
-    neededTrucks = dTrucks[dLifeSpan] + eTrucks[eLifeSpan] + demandNewTrucks(year)
-    print("neededTrucks: ", neededTrucks)
-    print("truckBudget: ", truckBudget)
-
-    if eTruckPrice(year) >= dTruckPrice(year):
-        eTrucksDesired = (truckBudget) - (dTruckPrice(year) * neededTrucks) / (eTruckPrice(year) - dTruckPrice(year))
-        if eTrucksDesired > neededTrucks:
-            eTrucksDesired = neededTrucks
     else:
-        eTrucksDesired = neededTrucks
-     
-    dTrucksDesired = neededTrucks - eTrucksDesired
-    
-    eTrucksPurchased = eTrucksDesired
-    dTrucksPurchased = dTrucksDesired
+        neededTrucks = dTrucks[dLifeSpan] + eTrucks[eLifeSpan] + demandNewTrucks(year)
 
-    print("eTruckSupply: ", eTruckSupply(year))
+        if eTruckPrice(year) >= dTruckPrice(year):
+            eTrucksDesired = (truckBudget) - (dTruckPrice(year) * neededTrucks) / (eTruckPrice(year) - dTruckPrice(year))
+            if eTrucksDesired > neededTrucks:
+                eTrucksDesired = neededTrucks
+        else:
+            eTrucksDesired = neededTrucks
 
-    if eTrucksDesired > eTruckSupply(year):
-        eTrucksPurchased = eTruckSupply(year)
-        dTrucksPurchased = neededTrucks - eTrucksPurchased
+        dTrucksDesired = neededTrucks - eTrucksDesired
 
-    print("eTrucksPurchased: ", eTrucksPurchased)
-    print("dTrucksPurchased: ", dTrucksPurchased)
+        eTrucksPurchased = eTrucksDesired
+        dTrucksPurchased = dTrucksDesired
+
+        if eTrucksDesired > eTruckSupply(year):
+            eTrucksPurchased = eTruckSupply(year)
+            dTrucksPurchased = neededTrucks - eTrucksPurchased
+
+    eTrucksPurchasedTracker.append(int(eTrucksPurchased))
+    dTrucksPurchasedTracker.append(int(dTrucksPurchased))
+
     eTrucks = updateTruckPopulation(eTrucksPurchased, eTrucks)
     dTrucks = updateTruckPopulation(dTrucksPurchased, dTrucks)
     truckBudget = truckBudgetAdjuster(sum(eTrucks.values()), truckBudget, eCost + eMaintenance, dCost + dMaintenance)
     
-    eTrucksByYear.append(sum(eTrucks.values()))
-    dTrucksByYear.append(sum(dTrucks.values()))
-    print('\n')
+    eTrucksByYear.append(int(sum(eTrucks.values())))
+    dTrucksByYear.append(int(sum(dTrucks.values())))
 
+print("Total truck populations by year")
+print("\n")
 print(eTrucksByYear)
 print(dTrucksByYear)
-
 plt.plot(dTrucksByYear)
 plt.plot(eTrucksByYear)
+plt.show()
+
+print("Truck prices by year")
+print(dTruckPriceTracker)
+print(eTruckPriceTracker)
+print("\n")
+plt.plot(dTruckPriceTracker)
+plt.plot(eTruckPriceTracker)
+plt.show()
+
+print("New demand by year")
+print(newDemandTracker)
+print("\n")
+plt.plot(newDemandTracker)
+plt.show()
+
+print("Total demand by year")
+print(DemandTracker)
+print("\n")
+plt.plot(DemandTracker)
+plt.show()
+
+print("Budget by year")
+print(budgetTracker)
+print("\n")
+plt.plot(budgetTracker)
+plt.show()
+
+print("Added electric budget by year")
+print(addedElectricBudgetTracker)
+print("\n")
+plt.plot(addedElectricBudgetTracker)
+plt.show()
+
+print("Electric truck supply by year")
+print(eTruckSupplyTracker)
+print("\n")
+plt.plot(eTruckSupplyTracker)
+plt.show()
+
+print("Number of each truck purchased by year")
+print(eTrucksPurchasedTracker)
+print(dTrucksPurchasedTracker)
+print("\n")
+plt.plot(eTrucksPurchasedTracker)
+plt.plot(dTrucksPurchasedTracker)
 plt.show()

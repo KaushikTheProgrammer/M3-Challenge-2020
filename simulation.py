@@ -1,9 +1,11 @@
 import math
 from matplotlib import pyplot as plt
 
+eTruckOrders = 140
+
 # Age: Population Count
 eTrucks =	{
-    0: 0,
+    0: eTruckOrders,
     1: 0,
     2: 0,
     3: 0,
@@ -54,23 +56,23 @@ eMaintenance = 10000 # $/year
 eLifeSpan = 20
 dLifeSpan = 15
 
-truckBudget = (3790000 * 120000) + (140 + 160000) # Number of trucks bought times price for diesel and electric
-
 # Initializing arrays to track truck population through years with year 0 values
 dTrucksByYear = [totalTrucks]
-eTrucksByYear = [0]
+eTrucksByYear = [eTruckOrders]
 
 # Model increasing truck budget each year
 def truckBudgetAdjuster(total_eTrucks, truckBudget, eTruckMaintenence, dTruckMaintenence):
+    print("maintenence delta: ", dTruckMaintenence - eTruckMaintenence)
+    print("added electric budget: ", total_eTrucks * (dTruckMaintenence - eTruckMaintenence))
     return truckBudget + (total_eTrucks * (dTruckMaintenence - eTruckMaintenence))
 
 # Model decrease of electric truck prices
 def eTruckPrice(time):
-    return     
+    return -102725500 + ((69012.05 + 102826500)/(1 + math.pow((time/1825022000000), 0.3197167)))
 
 # Model decrease of diesel truck prices
 def dTruckPrice(time):
-    return 103.4393 - (-18.31066 / 1.100271) * (1 - math.exp())
+    return (103.4393 - (-18.31066 / 1.100271) * (1 - math.exp(-1.100271*(time + 1)))) * 1000
 
 def eTruckPriceAnnual(time):
         return (eTruckPrice(time) / eLifeSpan) + eCost + eMaintenance
@@ -79,10 +81,10 @@ def dTruckPriceAnnual(time):
     return (dTruckPrice(time) / dLifeSpan) + dCost + dMaintenance
 
 def demandNewTrucks(time):
-    return 20000
+    return int(((6.1789 - (2.425216 * math.exp(-0.01918301 * time))) - 3.753684) * 100000)
 
 def eTruckSupply(time):
-    return 400000 + ((2627.477 - 400000) / (1 + math.pow((time / 1.261193), 5.087)))
+    return int(300000 + ((2627.477 - 300000) / (1 + math.pow((time / 1.261193), 5.087))))
 
 def updateTruckPopulation(numBought, trucks):
     trucksNew = {}
@@ -97,12 +99,27 @@ def truckSum(trucks):
     for item in trucks:
         total += trucks[item]
     
-    return total
+    return int(total)
+
+
+truckBudget = (3.79 - 3.68) * 1000000 * dTruckPrice(0) # Spending on new trucks in 2020
+yearTracker = [0]
+eTruckPriceTracker = [eTruckPrice(0)]
+dTruckPriceTracker = [dTruckPrice(0)]
+newDemandTracker = [demandNewTrucks(0)]
+budgetTracker = [truckBudget]
+eTruckSupplyTracker = [eTruckSupply(0)]
+maintenenceDelta = (dCost + dMaintenance) - (eCost + eMaintenance)
+addedElectricBudgetTracker = [sum(eTrucks.values()) * maintenenceDelta]
 
 for year in range(1, 21):
     eTruckPriceCurr = eTruckPriceAnnual(year)
     dTruckPriceCurr = dTruckPriceAnnual(year)
+    yearTracker.append(year)
+    
     print(year)
+    print("eTruckPrice(year): ", eTruckPrice(year))
+    print("dTruckPrice(year): ", dTruckPrice(year))
 
     electricIsCheaper = False
     
@@ -110,6 +127,8 @@ for year in range(1, 21):
         electricIsCheaper = True
 
     neededTrucks = dTrucks[dLifeSpan] + eTrucks[eLifeSpan] + demandNewTrucks(year)
+    print("neededTrucks: ", neededTrucks)
+    print("truckBudget: ", truckBudget)
 
     if eTruckPrice(year) >= dTruckPrice(year):
         eTrucksDesired = (truckBudget) - (dTruckPrice(year) * neededTrucks) / (eTruckPrice(year) - dTruckPrice(year))
@@ -122,20 +141,21 @@ for year in range(1, 21):
     
     eTrucksPurchased = eTrucksDesired
     dTrucksPurchased = dTrucksDesired
-    
+
+    print("eTruckSupply: ", eTruckSupply(year))
+
     if eTrucksDesired > eTruckSupply(year):
         eTrucksPurchased = eTruckSupply(year)
         dTrucksPurchased = neededTrucks - eTrucksPurchased
-    
 
+    print("eTrucksPurchased: ", eTrucksPurchased)
+    print("dTrucksPurchased: ", dTrucksPurchased)
     eTrucks = updateTruckPopulation(eTrucksPurchased, eTrucks)
     dTrucks = updateTruckPopulation(dTrucksPurchased, dTrucks)
     truckBudget = truckBudgetAdjuster(sum(eTrucks.values()), truckBudget, eCost + eMaintenance, dCost + dMaintenance)
-    print(truckBudget)
     
     eTrucksByYear.append(sum(eTrucks.values()))
     dTrucksByYear.append(sum(dTrucks.values()))
-    print(dTrucks)
     print('\n')
 
 print(eTrucksByYear)
